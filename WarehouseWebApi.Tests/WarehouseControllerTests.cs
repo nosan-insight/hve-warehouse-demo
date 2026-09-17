@@ -43,6 +43,30 @@ public class WarehouseControllerTests : IClassFixture<WebApplicationFactory<Prog
         }
     }
 
+    [Fact]
+    public async Task GetWarehouseLocations_ReturnsStubbedLocations()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/api/warehouse-locations");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var locations = await response.Content
+            .ReadFromJsonAsync<WarehouseLocationResponse[]>();
+
+        Assert.NotNull(locations);
+        Assert.Equal(3, locations!.Length);
+        Assert.All(locations, location =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(location.Id));
+            Assert.False(string.IsNullOrWhiteSpace(location.Zone));
+            Assert.False(string.IsNullOrWhiteSpace(location.Aisle));
+            Assert.InRange(location.Rack, 1, int.MaxValue);
+            Assert.InRange(location.Shelf, 1, int.MaxValue);
+        });
+    }
+
     [Theory]
     [InlineData(0, 32)]
     [InlineData(10, 50)]
@@ -67,5 +91,14 @@ public class WarehouseControllerTests : IClassFixture<WebApplicationFactory<Prog
         public string? Summary { get; set; }
 
         public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    }
+
+    private sealed class WarehouseLocationResponse
+    {
+        public string? Id { get; set; }
+        public string? Zone { get; set; }
+        public string? Aisle { get; set; }
+        public int Rack { get; set; }
+        public int Shelf { get; set; }
     }
 }
